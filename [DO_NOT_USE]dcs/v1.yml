@@ -1,0 +1,39 @@
+version: "3"
+
+services:
+
+  dfs-master:
+    container_name: dfs-master
+    image: sysu2019dsfnw/server
+    command: python3 master.py
+    ports:
+      - 2131:2131
+    networks:
+      dfs-network:
+        ipv4_address: 192.168.0.2
+    depends_on:
+      - dfs-minions-1
+      - dfs-minions-2
+
+  dfs-minions-1:
+    container_name: dfs-minion-1
+    image: sysu2019dsfnw/server
+    command: python3 minion.py
+    networks:
+      dfs-network:
+        ipv4_address: 192.168.0.3
+
+  dfs-minions-2:
+    container_name: dfs-minion-2
+    image: sysu2019dsfnw/server
+    command: python3 minion.py
+    networks:
+      dfs-network:
+        ipv4_address: 192.168.0.4
+
+networks:
+  dfs-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.0.0/16
