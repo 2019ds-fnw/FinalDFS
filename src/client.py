@@ -2,20 +2,30 @@ import rpyc
 import sys
 import os
 import logging
+import uuid
+
+from model import file_metadata
 
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(__name__)
+local_cache = {}
 
 
-def send_to_minion(block_uuid, data, minions):
-    LOG.info("sending: " + str(block_uuid) + str(minions))
-    minion = minions[0]
-    minions = minions[1:]
-    host, port = minion
+def query_from_server(query):
+    print(query)
+    ans = input()
+    if ans == 'y':
+        return True
+    else:
+        return False
+    # return True
 
+
+def send_to_minion(block_uuid, data, minionInfo):
+    host, port = minionInfo
     con = rpyc.connect(host, port=port)
     minion = con.root.Minion()
-    minion.put(block_uuid, data, minions)
+    minion.put(block_uuid, data)
 
 
 def read_from_minion(block_uuid, minion):
@@ -25,44 +35,58 @@ def read_from_minion(block_uuid, minion):
     return minion.get(block_uuid)
 
 
-def get(master, fname):
-    file_table = master.get_file_table_entry(fname)
+def get(master, f_name, local_path):
+    if f_name in local_cache:
+        r_file_table, update, timestamp = master.get_file_table_entry(f_name, local_cache[f_name].time_stamp)
+    else:
+        r_file_table, update, timestamp = master.get_file_table_entry(f_name)
+    if update:
+        local_cache[f_name] = file_metadata(f_name, r_file_table, timestamp)
+        file_table = r_file_table
+    else:
+        file_table = local_cache[f_name].blocks
+
     if not file_table:
         LOG.info("404: file not found")
         return
-
-    for block in file_table:
-        for m in [master.get_minions()[_] for _ in block[1]]:
-            data = read_from_minion(block[0], m)
-            if data:
-                sys.stdout.write(data)
-                break
-        else:
-            LOG.info("No blocks found. Possibly a corrupt file")
+    with open(local_path, 'w') as f:
+        for block in file_table:
+            block_uuid, minionInfo = block
+            data = read_from_minion(block_uuid, minionInfo)
+            f.write(data)
+    master.read_finished(f_name)
 
 
-def put(master, source, dest):
+def put(master, source, destination):
     size = os.path.getsize(source)
-    blocks = master.write(dest, size)
+    blocks, timestamp = master.write(destination, size, query_from_server)
+    local_cache[destination] = file_metadata(destination, blocks, timestamp)
     with open(source) as f:
         for b in blocks:
             data = f.read(master.get_block_size())
-            block_uuid = b[0]
-            minions = [master.get_minions()[_] for _ in b[1]]
-            send_to_minion(block_uuid, data, minions)
+            block_uuid, minionInfo = b
+            send_to_minion(block_uuid, data, minionInfo)
+    master.write_finished(destination)
+
+
+def delete(master, dest):
+    master.delete(dest)
 
 
 def main(args):
     con = rpyc.connect("localhost", port=2131)
     master = con.root.Master()
 
-    if args[0] == "get":
-        get(master, args[1])
-    elif args[0] == "put":
-        put(master, args[1], args[2])
+    if args[1] == "get":
+        get(master, args[2], args[3])
+    elif args[1] == "put":
+        put(master, args[2], args[3])
+    elif args[1] == "del":
+        delete(master, args[2])
     else:
         LOG.error("try 'put srcFile destFile OR get file'")
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    args = sys.argv
+    main(args)
