@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+ name: myserver
+spec:
+ replicas: 1
+ selector:
+  app: server
+ template:
+  metadata:
+   labels:
+    app: server
+  spec:
+   containers:
+   - name: server
+     image: dfs-base
+     imagePullPolicy: IfNotPresent
+     command: ["/bin/bash","-ce","tail -f /dev/null"]
+     ports:
+     - containerPort: 2131
+     
+     
