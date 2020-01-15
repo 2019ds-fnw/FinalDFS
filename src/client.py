@@ -1,32 +1,32 @@
 import os
 import uuid  # DO NOT DELETE
 import rpyc
+import toml
 from model import FileMetaData
-from config import RPYC_CONFIG
+
+RPYC_CONFIG = toml.load("config.toml")["rpyc"]
 
 local_cache = {}
 
 
 def query_from_server(query):
-    print(query)
+    print(query, end="")
     ans = input()
-    if ans == 'y':
+    if ans == 'y' or ans == 'Y':
         return True
     else:
         return False
     # return True
 
 
-def send_to_minion(block_uuid, data, minion_info):
-    host, port = minion_info
-    con = rpyc.connect(host, port=port, config=RPYC_CONFIG)
+def send_to_minion(block_uuid, data, minion_ip, minion_port):
+    con = rpyc.connect(minion_ip, minion_port, config=RPYC_CONFIG)
     minion = con.root.Minion()
     minion.put(block_uuid, data)
 
 
-def read_from_minion(block_uuid, minion):
-    host, port = minion
-    con = rpyc.connect(host, port=port, config=RPYC_CONFIG)
+def read_from_minion(block_uuid, minion_ip, minion_port):
+    con = rpyc.connect(minion_ip, port=minion_port, config=RPYC_CONFIG)
     minion = con.root.Minion()
     return minion.get(block_uuid)
 
@@ -45,10 +45,12 @@ def get(master, f_name, local_path):
     if not file_table:
         print("File not found, please check your input")
         return
+    main_minions = master.get_minions()
+    port = master.get_minion_port()
     with open(local_path, 'wb') as f:
         for block in file_table:
-            block_uuid, minion_info = block
-            data = read_from_minion(block_uuid, minion_info)
+            block_uuid, gid = block
+            data = read_from_minion(block_uuid, main_minions[gid], port)
             f.write(data)
     master.read_finished(f_name)
 
@@ -61,14 +63,15 @@ def put(master, source, destination):
         print("Permission denied. You do not have the read access to the \'%s\'" % source)
         return
     size = os.path.getsize(source)
-    blocks, timestamp = master.write(destination, size, query_from_server)
+    blocks, timestamp, main_minions = master.write(destination, size, query_from_server)
     local_cache[destination] = FileMetaData(destination, blocks, timestamp)
-
+    block_size = master.get_block_size()
+    port = master.get_minion_port()
     with open(source, 'rb') as f:
         for b in blocks:
-            data = f.read(master.get_block_size())
-            block_uuid, minion_info = b
-            send_to_minion(block_uuid, data, minion_info)
+            data = f.read(block_size)
+            block_uuid, gid = b
+            send_to_minion(block_uuid, data, main_minions[gid], port)
     master.write_finished(destination)
 
 

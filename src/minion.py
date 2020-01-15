@@ -3,15 +3,16 @@ import os
 import sys
 import socket
 import rpyc
+import toml
 from rpyc.utils.server import ThreadedServer
 
 DATA_DIR = "/data/"
-LOG = logging.getLogger(__name__)
 
 
 class MinionService(rpyc.Service):
     class exposed_Minion():
         blocks = {}
+        forward_list = []
 
         def __init__(self):
             pass
@@ -28,6 +29,9 @@ class MinionService(rpyc.Service):
                 return None
             with open(block_addr, 'rb') as f:
                 return f.read()
+
+        def exposed_fl_append(self, block_uuid):
+            self.forward_list.append(block_uuid)
 
         def forward(self, block_uuid, data, minions):
             print("8888: forwaring to:")
@@ -48,7 +52,7 @@ class MinionService(rpyc.Service):
 
 if __name__ == "__main__":
     args = sys.argv
-    port = 8888
+    port = toml.load("config.toml")["minion"]["port"]
     if len(args) > 1:
         port = args[1]
     # DATA_DIR += port + "/"

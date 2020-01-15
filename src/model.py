@@ -13,6 +13,7 @@ class FileMetaData:
             blocks = []
         self.fname = fname
         self.blocks = blocks
+        self.minion_gids = []    # 表明该文件放在哪几个minion group中
         if timestamp is None:
             self.time_stamp = time_stamp_now()
         else:
