@@ -1,20 +1,17 @@
+import configparser
+import math
+import os
+import pickle
+import random
+import signal
 import socket
-import time
+import sys
+import threading
+import uuid
 
 import rpyc
-import uuid
-import threading
-import math
-import random
-import configparser
-import signal
-import pickle
-import sys
-import os
-
-from rpyc.utils.server import ThreadedServer
-
 from model import FileMetaData
+from rpyc.utils.server import ThreadedServer
 
 
 class FileLock:
