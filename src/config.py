@@ -1,0 +1,1 @@
+RPYC_CONFIG = {'sync_request_timeout': 120}

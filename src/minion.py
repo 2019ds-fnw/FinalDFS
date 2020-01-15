@@ -5,7 +5,7 @@ import socket
 import rpyc
 from rpyc.utils.server import ThreadedServer
 
-DATA_DIR = "data/"
+DATA_DIR = "/data/"
 LOG = logging.getLogger(__name__)
 
 
@@ -17,7 +17,7 @@ class MinionService(rpyc.Service):
             pass
 
         def exposed_put(self, block_uuid, data):
-            with open(DATA_DIR + str(block_uuid), 'w') as f:
+            with open(DATA_DIR + str(block_uuid), 'wb') as f:
                 f.write(data)
             # if len(minions) > 0:
             #     self.forward(block_uuid, data, minions)
@@ -26,7 +26,7 @@ class MinionService(rpyc.Service):
             block_addr = DATA_DIR + str(block_uuid)
             if not os.path.isfile(block_addr):
                 return None
-            with open(block_addr) as f:
+            with open(block_addr, 'rb') as f:
                 return f.read()
 
         def forward(self, block_uuid, data, minions):

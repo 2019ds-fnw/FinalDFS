@@ -1,7 +1,8 @@
 import os
-
+import uuid  # DO NOT DELETE
 import rpyc
 from model import FileMetaData
+from config import RPYC_CONFIG
 
 local_cache = {}
 
@@ -18,14 +19,14 @@ def query_from_server(query):
 
 def send_to_minion(block_uuid, data, minion_info):
     host, port = minion_info
-    con = rpyc.connect(host, port=port)
+    con = rpyc.connect(host, port=port, config=RPYC_CONFIG)
     minion = con.root.Minion()
     minion.put(block_uuid, data)
 
 
 def read_from_minion(block_uuid, minion):
     host, port = minion
-    con = rpyc.connect(host, port=port)
+    con = rpyc.connect(host, port=port, config=RPYC_CONFIG)
     minion = con.root.Minion()
     return minion.get(block_uuid)
 
@@ -44,7 +45,7 @@ def get(master, f_name, local_path):
     if not file_table:
         print("File not found, please check your input")
         return
-    with open(local_path, 'w') as f:
+    with open(local_path, 'wb') as f:
         for block in file_table:
             block_uuid, minion_info = block
             data = read_from_minion(block_uuid, minion_info)
@@ -63,7 +64,7 @@ def put(master, source, destination):
     blocks, timestamp = master.write(destination, size, query_from_server)
     local_cache[destination] = FileMetaData(destination, blocks, timestamp)
 
-    with open(source) as f:
+    with open(source, 'rb') as f:
         for b in blocks:
             data = f.read(master.get_block_size())
             block_uuid, minion_info = b
@@ -73,6 +74,12 @@ def put(master, source, destination):
 
 def delete(master, dest):
     master.delete(dest)
+
+
+def ls(master):
+    file_list = master.get_list()
+    for f in file_list:
+        print(f)
 
 
 def print_usage():
@@ -95,7 +102,7 @@ def print_hello():
 def main():
     MASTER_IP = "localhost"
     MASTER_PORT = 2131
-    con = rpyc.connect(MASTER_IP, port=MASTER_PORT)
+    con = rpyc.connect(MASTER_IP, port=MASTER_PORT, config=RPYC_CONFIG)
     print("Connected to master@%s:%d." % (MASTER_IP, MASTER_PORT))
     master = con.root.Master()
     print_hello()
@@ -103,12 +110,10 @@ def main():
     while True:
         print(">>> ", end="")
         whole_command = input().split(" ")
+
         main_command = whole_command[0]
-        if len(whole_command) == 1:
-            if main_command[0] == "exit":
-                exit(0)
-            else:
-                print_usage()
+
+        if main_command == '':
             continue
 
         if main_command == "get":
@@ -126,6 +131,10 @@ def main():
                 print("**   Command: Command: del <dest_file_name>")
                 continue
             delete(master, whole_command[1])
+        elif main_command == "ls":
+            ls(master)
+        elif main_command == "exit":
+            exit(0)
         else:
             print("Unrecognized command, please retry.")
 
