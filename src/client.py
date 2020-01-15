@@ -1,5 +1,5 @@
 import os
-import uuid  # DO NOT DELETE
+import uuid   ### DO NOT DELETE !!!
 import rpyc
 import toml
 from model import FileMetaData
@@ -81,6 +81,9 @@ def delete(master, dest):
 
 def ls(master):
     file_list = master.get_list()
+    if len(file_list) == 0:
+        print("No file.")
+        return
     for f in file_list:
         print(f)
 
@@ -94,7 +97,7 @@ def print_usage():
     print("3. Get file from the distributed filesystem:")
     print("   Command: get <dest_file_name> <path_to_save_the_file>")
     print("4. Delete file in the distributed filesystem:")
-    print("   Command: del <dest_file_name")
+    print("   Command: del <dest_file_name>")
     print("\nType \'exit\' to exit FinalDFS client.")
 
 
