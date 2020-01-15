@@ -1,8 +1,0 @@
-title = "Final DFS Config File"
-
-[master]
-    block_size = 10
-    replication_factor = 2
-
-[minions]
-    list = ["1:192.168.0.3:8888", "2:192.168.0.4:8888", ]

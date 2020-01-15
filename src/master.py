@@ -13,7 +13,7 @@ import os
 
 from rpyc.utils.server import ThreadedServer
 
-from model import file_metadata
+from src.model import FileMetaData
 
 
 class FileLock:
@@ -96,7 +96,7 @@ class MasterService(rpyc.Service):
             # self.__class__.file_table[dest] = []
             # TODO 是否需要改进以下file_table的形式？？？
             self.__class__.tableLock.acquire()
-            self.__class__.file_table[dest] = file_metadata(fname=dest)
+            self.__class__.file_table[dest] = FileMetaData(fname=dest)
             self.__class__.file_locks[dest] = FileLock()
             # 创建文件的同时上锁，避免同时创建文件
             self.__class__.file_locks[dest].w_acquire()

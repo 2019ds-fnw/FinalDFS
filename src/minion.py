@@ -6,7 +6,7 @@ import os
 
 from rpyc.utils.server import ThreadedServer
 
-DATA_DIR = "minion/"
+DATA_DIR = "data/"
 
 
 class MinionService(rpyc.Service):
