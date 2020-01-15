@@ -16,7 +16,7 @@ from rpyc.utils.server import ThreadedServer
 from model import file_metadata
 
 
-class file_lock:
+class FileLock:
     def __init__(self):
         self.reader = 0
         self.r_lock = threading.Lock()
@@ -81,7 +81,7 @@ class MasterService(rpyc.Service):
             # 加载文件元数据的同时初始化文件锁，默认所有锁此时处于打开状态
             for f in MasterService.exposed_Master.file_table:
                 if f not in MasterService.exposed_Master.file_locks:
-                    MasterService.exposed_Master.file_locks[f] = file_lock()
+                    MasterService.exposed_Master.file_locks[f] = FileLock()
 
         def exposed_read(self, fname):
             mapping = self.__class__.file_table[fname]
@@ -89,7 +89,7 @@ class MasterService(rpyc.Service):
 
         def exposed_write(self, dest, size, query):
             if self.exists(dest):
-                ans = query('该文已存在，是否覆盖？')
+                ans = query('The file \'%s\' already exists, would you like to overwrite it?' % dest)
                 if ans:
                     self.exposed_delete(dest)
 
@@ -97,7 +97,7 @@ class MasterService(rpyc.Service):
             # TODO 是否需要改进以下file_table的形式？？？
             self.__class__.tableLock.acquire()
             self.__class__.file_table[dest] = file_metadata(fname=dest)
-            self.__class__.file_locks[dest] = file_lock()
+            self.__class__.file_locks[dest] = FileLock()
             # 创建文件的同时上锁，避免同时创建文件
             self.__class__.file_locks[dest].w_acquire()
             self.__class__.tableLock.release()

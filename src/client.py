@@ -47,12 +47,12 @@ def get(master, f_name, local_path):
         file_table = local_cache[f_name].blocks
 
     if not file_table:
-        LOG.info("404: file not found")
+        LOG.info("File not found, please check your input")
         return
     with open(local_path, 'w') as f:
         for block in file_table:
-            block_uuid, minionInfo = block
-            data = read_from_minion(block_uuid, minionInfo)
+            block_uuid, minion_info = block
+            data = read_from_minion(block_uuid, minion_info)
             f.write(data)
     master.read_finished(f_name)
 
@@ -84,7 +84,7 @@ def main(args):
     elif args[1] == "del":
         delete(master, args[2])
     else:
-        LOG.error("try 'put srcFile destFile OR get file'")
+        LOG.error("Try 'put <src_file_name> <dest_file_name>' OR 'get <dest_file_name>'")
 
 
 if __name__ == "__main__":
