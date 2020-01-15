@@ -86,7 +86,7 @@ class MasterService(rpyc.Service):
         tableLock = threading.Lock()
         main_minions = []
         replication_minions = []
-        minions_port = -1  # decied by config.toml eventually
+        minions_port = -1  # decided by config.toml eventually
         block_size = 1  # decided by config.toml eventually
 
         # replication_factor = 1
