@@ -1,12 +1,12 @@
-import sys
-
-import rpyc
-import uuid
+import logging
 import os
-
+import sys
+import socket
+import rpyc
 from rpyc.utils.server import ThreadedServer
 
 DATA_DIR = "data/"
+LOG = logging.getLogger(__name__)
 
 
 class MinionService(rpyc.Service):
@@ -48,9 +48,13 @@ class MinionService(rpyc.Service):
 
 if __name__ == "__main__":
     args = sys.argv
-    port = args[1]
-    DATA_DIR += port + "/"
-    if not os.path.isdir(DATA_DIR) or not os.path.exists(DATA_DIR):
-        os.mkdir(DATA_DIR)
+    port = 8888
+    if len(args) > 1:
+        port = args[1]
+    # DATA_DIR += port + "/"
+    # if not os.path.isdir(DATA_DIR) or not os.path.exists(DATA_DIR):
+    #     os.mkdir(DATA_DIR)
     t = ThreadedServer(MinionService, port=int(port), protocol_config={"allow_public_attrs": True})
+    print("Will listening on %s:%d ..." % (socket.gethostbyname(socket.gethostname()), port))
     t.start()
+

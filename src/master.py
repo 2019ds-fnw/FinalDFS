@@ -1,3 +1,4 @@
+import socket
 import time
 
 import rpyc
@@ -13,7 +14,7 @@ import os
 
 from rpyc.utils.server import ThreadedServer
 
-from src.model import FileMetaData
+from model import FileMetaData
 
 
 class FileLock:
@@ -167,5 +168,7 @@ class MasterService(rpyc.Service):
 if __name__ == "__main__":
     set_conf()
     signal.signal(signal.SIGINT, int_handler)
-    t = ThreadedServer(MasterService, port=2131)
+    PORT = 2131
+    t = ThreadedServer(MasterService, port=PORT)
+    print("Will listening on %s:%d ..." % (socket.gethostbyname(socket.gethostname()), PORT))
     t.start()
