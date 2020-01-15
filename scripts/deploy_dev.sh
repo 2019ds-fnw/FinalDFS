@@ -20,19 +20,21 @@ sudo docker container rm -f $(sudo docker container ls -aqf name=master)
 for i in $(seq 1 12)
 do
   echo Starting minion-${i}
-  sudo docker run -d --rm --network=dfs-network \
+  sudo docker run -d --network=dfs-network \
        --ip=192.168.128.$(expr $i + 10) \
        --name=minion-${i} \
+       --restart=always \
        -v /home/libre/PycharmProjects/FinalDFS/src/:/root:ro \
        sysu2019dsfnw/server \
        python minion.py
 done
 
 echo Starting master ...
-sudo docker run -it --rm --network=dfs-network \
+sudo docker run -it --network=dfs-network \
        -p 2131:2131 \
        --ip=192.168.128.254 \
        --name=master \
+       --restart=always \
        -v /home/libre/PycharmProjects/FinalDFS/src/:/root:ro \
        sysu2019dsfnw/server \
        python master.py
