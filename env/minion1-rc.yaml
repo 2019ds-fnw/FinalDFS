@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+ name: minion1
+spec:
+ replicas: 1
+ selector:
+  app: minion01
+ template:
+  metadata:
+   labels:
+    app: minion01
+  spec:
+   containers:
+   - name: minion0101
+     image: dfs-base
+     imagePullPolicy: IfNotPresent
+     command: ["/bin/bash","-ce","tail -f /dev/null"]
+     ports:
+     - containerPort: 8888
+   - name: minion0102
+     image: dfs-base
+     imagePullPolicy: IfNotPresent
+     command: ["/bin/bash","-ce","tail -f /dev/null"]
+     ports:
+     - containerPort: 28888
+   - name: minion0103
+     image: dfs-base
+     imagePullPolicy: IfNotPresent
+     command: ["/bin/bash","-ce","tail -f /dev/null"]
+     ports:
+     - containerPort: 38888
